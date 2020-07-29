@@ -52,7 +52,9 @@ plot(jinzhi)
             jinzhi[i] += jinzhi[i-1]
             if (pos[i-1]!=0, ~)
                 @routine begin
+                    # use `@zeros TYPE vars...` to add ancillas
                     @zeros T anc1 anc2
+                    # !note: one operations a time, it should be `y += f(x)` or `y += x`.
                     anc1 += b[i] / b[i-1]
                     anc1 -= 1
                     anc2 += anc1 * pos[i-1]
@@ -75,6 +77,8 @@ plot(jinzhi)
             end
         end
         @zeros T var varsum mean sum std
+        # `var` and `mean` are functions from Statistics, they are not reversible.
+        # also, the output field should not contain the same variable as the input, see https://giggleliu.github.io/NiLang.jl/stable/examples/sharedwrite/#Conclusion-1.
         NiLang.i_var_mean_sum(var, varsum, mean, sum, jinzhi)
         std += sqrt(var)
     end
@@ -91,10 +95,14 @@ jinzhi=zeros(n)
 jinzhi[1]=1.0
 pos=zeros(n)
 out=0.0
+
+# check the reversibility
 @assert check_inv(jin, (out,b,ma,jinzhi,pos,bili))
+# check the gradients with numeric gradients
 @assert check_grad(jin, (out,b,ma,jinzhi,pos,bili); iloss=1)
 
-# should be: 1.5511167937559058
+# `out` should be: 1.5511167937559058
 out,b,ma,jinzhi,pos,bili=jin(out,b,ma,jinzhi,pos,bili)
 out,b,ma,jinzhi,pos,bili=(~jin)(out,b,ma,jinzhi,pos,bili)
+
 gout,gb,gma,gjinzhi,gpos,gbili= NiLang.AD.gradient(jin, (out,b,ma,jinzhi,pos,bili); iloss=1)
