@@ -56,9 +56,9 @@ plot(jinzhi)
                     @zeros T anc1 anc2
                     # !note: one operations a time, it should be `y += f(x)` or `y += x`.
                     anc1 += b[i] / b[i-1]
-                    anc1 -= 1
+                    anc1 -= 1.0
                     anc2 += anc1 * pos[i-1]
-                    anc2 += 1
+                    anc2 += 1.0
                 end
                 jinzhi[i] -= jinzhi[i-1]
                 jinzhi[i] += jinzhi[i-1] * anc2
@@ -66,15 +66,20 @@ plot(jinzhi)
             end
 
             ma[i] += b[i] * bili
-            bili -= 1
+            bili -= 1.0
             ma[i] -= bili * ma[i-1]
-            bili += 1
+            bili += 1.0
 
-            if (ma[i]<b[i], ~)
-                pos[i] += 1.0
-            else
-                pos[i] -= 1.0
-            end
+            #if (ma[i]<b[i], ~)
+            #    pos[i] += 1.0
+            #else
+            #    pos[i] -= 1.0
+            #end
+
+            # the relaxed version
+            ma[i] -= b[i]
+            pos[i] -= tanh(ma[i])
+            ma[i] += b[i]
         end
         @zeros T var varsum mean sum std
         # `var` and `mean` are functions from Statistics, they are not reversible.
